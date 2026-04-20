@@ -25,6 +25,8 @@ SECRET_KEY = 'django-insecure-pss(x7exi^#r2mz%0-*r4u5krt-%@4&qsai9&y+iotn+_snh(g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+from datetime import timedelta
+
 ALLOWED_HOSTS = []
 
 
@@ -40,6 +42,10 @@ INSTALLED_APPS = [
 
     #apps
     "core",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+
 ]
 
 MIDDLEWARE = [
@@ -121,3 +127,19 @@ STATIC_URL = 'static/'
 
 
 AUTH_USER_MODEL = 'core.User'
+
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
