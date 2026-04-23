@@ -13,6 +13,6 @@ urlpatterns = [
     path("transactions/<int:pk>", TransactionDetailView.as_view()),
     path("goal/", GoalListCreatView.as_view()),
     path("goal/<int:pk>/", GoalDetailView.as_view()),
-    path("dashboard/", DashboardView.as_view(), name="dashboard")
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
 ]
 
