@@ -1,31 +1,44 @@
-from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from django.shortcuts import render
+from rest_framework.generics import (
+    GenericAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    RetrieveUpdateAPIView,
+)
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from .models import Transaction, Goal
-from .serializers import *
-from django.db.models import  Sum
+from rest_framework import permissions
+from django.db.models import Sum
+from dj_rest_auth.views import PasswordResetConfirmView as DjPasswordResetConfirmView
+
+from .models import Goal, Transaction, UserProfile
+from .serializers import (
+    DashboardSerializer,
+    GoalSerializer,
+    ProfileSerializer,
+    TransactionSerializer,
+)
 
 
-#registration 
-class RegisterView(GenericAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = []
+class PasswordResetConfirmPageView(DjPasswordResetConfirmView):
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            "core/password_reset_confirm.html",
+            {
+                "uid": request.query_params.get("uid", ""),
+                "token": request.query_params.get("token", ""),
+            },
+        )
 
 
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response(UserSerializer(user).data, status=201)
-    
-
-class MeView(GenericAPIView):
-    serializer_class = UserSerializer
+class ProfileView(RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "patch", "head", "options"]
 
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
+    def get_object(self):
+        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+        return profile
 
 #List and create
 class TransactionListCreateView(ListCreateAPIView):

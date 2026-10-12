@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verify your email | Balance</title>
+  </head>
+  <body>
+    <main>
+      <h1>Verify your email</h1>
+      <p id="verification-status">Confirm that you want to verify this email address.</p>
+      <button id="confirm-email" type="button">Confirm email address</button>
+    </main>
+    <script>
+      const key = "{{ key|escapejs }}";
+      const button = document.getElementById("confirm-email");
+      const status = document.getElementById("verification-status");
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        status.textContent = "Verifying your email address...";
+
+        try {
+          const response = await fetch("/api/auth/registration/verify-email/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key }),
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.detail || "Email verification failed.");
+          }
+          status.textContent = "Your email address is verified. You can now log in.";
+          button.hidden = true;
+        } catch (error) {
+          status.textContent = error.message || "Email verification failed. Please try again.";
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

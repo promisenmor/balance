@@ -10,24 +10,31 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
+from datetime import timedelta
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in {"1", "true", "yes"}
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError("DJANGO_SECRET_KEY must be configured when DJANGO_DEBUG is disabled.")
+    SECRET_KEY = "local-development-only-not-for-production"
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pss(x7exi^#r2mz%0-*r4u5krt-%@4&qsai9&y+iotn+_snh(g'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-from datetime import timedelta
-
-ALLOWED_HOSTS = []
+if not DEBUG:
+    if not ALLOWED_HOSTS:
+        raise RuntimeError("DJANGO_ALLOWED_HOSTS must be configured when DJANGO_DEBUG is disabled.")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -39,22 +46,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     #apps
-    "core",
+    "core.apps.CoreConfig",
 
     #auth
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "rest_framework.authtoken",
     "drf_spectacular",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "dj_rest_auth",
     "dj_rest_auth.registration",
-    "rest_framework.authtoken"
-
-
 ]
 
 SITE_ID = 1
@@ -69,6 +76,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 ROOT_URLCONF = 'balance.urls'
@@ -139,10 +151,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-AUTH_USER_MODEL = 'core.User'
-
-
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -155,12 +163,32 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
-# dj-rest-auth
 REST_AUTH = {
-    'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'access-token',
-    'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
-    'SESSION_LOGIN': False,
+    "USE_JWT": True,
+    "SESSION_LOGIN": False,
+    "OLD_PASSWORD_FIELD_ENABLED": True,
+    "REGISTER_SERIALIZER": "core.serializers.EmailRegistrationSerializer",
+    "PASSWORD_RESET_SERIALIZER": "core.serializers.ApiPasswordResetSerializer",
+    "USER_DETAILS_SERIALIZER": "core.serializers.UserDetailsSerializer",
+    "JWT_AUTH_HTTPONLY": False,
 }
+
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
+
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+if DEBUG:
+    EMAIL_BACKEND = EMAIL_BACKEND or "django.core.mail.backends.console.EmailBackend"
+    DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL or "Balance <no-reply@localhost>"
+elif not EMAIL_BACKEND or not DEFAULT_FROM_EMAIL:
+    raise RuntimeError(
+        "EMAIL_BACKEND and DEFAULT_FROM_EMAIL must be configured when DJANGO_DEBUG is disabled."
+    )
