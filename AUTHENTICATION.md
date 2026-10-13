@@ -38,6 +38,11 @@ It includes the dashboard, transactions, budgets, goals, analytics, and
 settings. Its data is loaded from the API using the Django session and CSRF
 protection.
 
+API documentation is available at `/api/docs/` (Swagger UI) and `/api/redoc/`
+(ReDoc), both backed by the OpenAPI schema at `/api/schema/`. Swagger UI
+supports authenticated requests using the `jwtAuth` bearer-token scheme or the
+Django session cookie.
+
 | Method | Path | Authentication | Purpose |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/registration/` | None | Register with `email`, `password1`, and `password2`; sends verification email |
