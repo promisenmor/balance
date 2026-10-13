@@ -19,6 +19,8 @@ and create an administrator:
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe manage.py tailwind install
+.\venv\Scripts\python.exe manage.py tailwind build
 .\venv\Scripts\python.exe manage.py migrate
 .\venv\Scripts\python.exe manage.py createsuperuser
 .\venv\Scripts\python.exe manage.py runserver
@@ -36,30 +38,8 @@ disabled.
 The signed-in HTML frontend is available at `/` after signing in at `/login/`.
 It includes the dashboard, transactions, budgets, goals, analytics, and
 settings. Its data is loaded from the API using the Django session and CSRF
-protection.
-
-| Method | Path | Authentication | Purpose |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/registration/` | None | Register with `email`, `password1`, and `password2`; sends verification email |
-| `POST` | `/api/auth/registration/verify-email/` | None | Verify with `{"key": "<email key>"}` |
-| `POST` | `/api/auth/registration/resend-email/` | None | Resend verification with `{"email": "<address>"}` |
-| `POST` | `/api/auth/login/` | None | Login with `email` and `password`; returns `access`, `refresh`, and user details |
-| `POST` | `/api/auth/token/refresh/` | None | Exchange a `refresh` token for a rotated pair |
-| `POST` | `/api/auth/logout/` | Access JWT | Submit the current `refresh` token to revoke it |
-| `GET` | `/api/auth/user/` | Access JWT or session | Retrieve the authenticated user and their profile |
-| `GET`, `PATCH` | `/api/auth/profile/` | Access JWT or session | Retrieve or update the authenticated user's profile |
-| `GET`, `POST` | `/api/transactions/` | Access JWT or session | List or create the user's transactions |
-| `GET`, `PATCH`, `PUT`, `DELETE` | `/api/transactions/<id>/` | Access JWT or session | Retrieve, update, or delete an owned transaction |
-| `GET`, `POST` | `/api/budgets/` | Access JWT or session | List budgets with spending and alert status, or create one |
-| `GET`, `PATCH`, `PUT`, `DELETE` | `/api/budgets/<id>/` | Access JWT or session | Retrieve, update, or delete an owned budget |
-| `GET`, `POST` | `/api/goals/` | Access JWT or session | List or create the user's savings goals |
-| `GET`, `PATCH`, `PUT`, `DELETE` | `/api/goals/<id>/` | Access JWT or session | Retrieve, update, or delete an owned goal |
-| `GET`, `POST` | `/api/reminders/` | Access JWT or session | List or create the user's reminders |
-| `GET`, `PATCH`, `PUT`, `DELETE` | `/api/reminders/<id>/` | Access JWT or session | Retrieve, update, or delete an owned reminder |
-| `GET` | `/api/dashboard/` | Access JWT or session | Retrieve totals, recent transactions, goals, and budget alerts |
-| `POST` | `/api/auth/password/change/` | Access JWT | Change password with `old_password`, `new_password1`, and `new_password2` |
-| `POST` | `/api/auth/password/reset/` | None | Request a reset email with `email` |
-| `POST` | `/api/auth/password/reset/confirm/` | None | Confirm reset with `uid`, `token`, `new_password1`, and `new_password2` |
+protection. The complete frontend, API, authentication, and administration
+route list is in [URLS.md](./URLS.md).
 
 The reset email opens a small password form at the confirmation URL. API clients
 can instead read `uid` and `token` from that URL and submit them with the new
