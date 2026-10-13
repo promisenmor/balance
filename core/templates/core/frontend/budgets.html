@@ -1,0 +1,40 @@
+{% extends "core/frontend/base.html" %}
+
+{% block page_title %}Budgets{% endblock %}
+
+{% block page_content %}
+<section class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-sm font-semibold text-indigo-600">PLAN WITH CONFIDENCE</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Budgets</h1>
+        <p class="mt-2 text-slate-500">Set a limit, then keep spending in view.</p>
+    </div>
+    <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700" type="button" data-open-dialog="budget-dialog">+ Create budget</button>
+</section>
+<section id="budget-grid" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <p class="panel text-sm text-slate-500">Loading budgets…</p>
+</section>
+<dialog id="budget-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-950/40">
+    <form method="dialog" class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+        <h2 class="text-lg font-bold">Create a budget</h2>
+        <button class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close dialog">✕</button>
+    </form>
+    <form id="budget-form" class="space-y-4 p-6">
+        {% csrf_token %}
+        <label class="block text-sm font-semibold text-slate-700">Category
+            <input class="form-input mt-2" name="category" maxlength="100" placeholder="e.g. dining" required>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Spending limit
+            <input class="form-input mt-2" name="limit_amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Period
+            <select class="form-input mt-2" name="period"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="yearly">Yearly</option></select>
+        </label>
+        <p class="rounded-xl bg-indigo-50 px-4 py-3 text-sm text-indigo-800">We’ll flag your budget at 80% and again when it reaches its limit. You can still record every transaction.</p>
+        <div class="flex justify-end gap-3 pt-2">
+            <button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700" type="button" data-close-dialog="budget-dialog">Cancel</button>
+            <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700" type="submit">Save budget</button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}

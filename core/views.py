@@ -1,4 +1,9 @@
-from django.shortcuts import render
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_http_methods
 from rest_framework.generics import (
     GenericAPIView,
     ListCreateAPIView,
@@ -19,6 +24,67 @@ from .serializers import (
     ReminderSerializer,
     TransactionSerializer,
 )
+
+
+@require_http_methods(["GET", "POST"])
+def frontend_login(request):
+    if request.user.is_authenticated:
+        return redirect("frontend-dashboard")
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            login(request, user)
+            next_url = request.POST.get("next") or request.GET.get("next", "")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(next_url)
+            return redirect("frontend-dashboard")
+        messages.error(request, "Check your email and password and try again.")
+
+    return render(request, "core/frontend/login.html")
+
+
+@require_http_methods(["POST"])
+@login_required
+def frontend_logout(request):
+    logout(request)
+    return redirect("frontend-login")
+
+
+@login_required
+def frontend_dashboard(request):
+    return render(request, "core/frontend/dashboard.html", {"page_name": "dashboard"})
+
+
+@login_required
+def frontend_transactions(request):
+    return render(request, "core/frontend/transactions.html", {"page_name": "transactions"})
+
+
+@login_required
+def frontend_budgets(request):
+    return render(request, "core/frontend/budgets.html", {"page_name": "budgets"})
+
+
+@login_required
+def frontend_goals(request):
+    return render(request, "core/frontend/goals.html", {"page_name": "goals"})
+
+
+@login_required
+def frontend_analytics(request):
+    return render(request, "core/frontend/analytics.html", {"page_name": "analytics"})
+
+
+@login_required
+def frontend_settings(request):
+    return render(request, "core/frontend/settings.html", {"page_name": "settings"})
 
 
 class PasswordResetConfirmPageView(DjPasswordResetConfirmView):

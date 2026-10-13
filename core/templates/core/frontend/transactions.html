@@ -1,0 +1,59 @@
+{% extends "core/frontend/base.html" %}
+
+{% block page_title %}Transactions{% endblock %}
+
+{% block page_content %}
+<section class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-sm font-semibold text-indigo-600">MONEY IN, MONEY OUT</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Transactions</h1>
+        <p class="mt-2 text-slate-500">A clear record of every move.</p>
+    </div>
+    <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700" type="button" data-open-dialog="transaction-dialog">+ Add transaction</button>
+</section>
+<section class="panel">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <label class="sr-only" for="transaction-search">Search transactions</label>
+        <input id="transaction-search" class="form-input max-w-sm" type="search" placeholder="Search by category or description…" data-filter="transactions">
+        <p class="text-sm text-slate-500"><span id="transaction-count">0</span> transactions</p>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[42rem] text-left text-sm">
+            <thead class="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                <tr><th class="px-3 py-3 font-semibold">Description</th><th class="px-3 py-3 font-semibold">Category</th><th class="px-3 py-3 font-semibold">Date</th><th class="px-3 py-3 text-right font-semibold">Amount</th><th class="px-3 py-3 text-right font-semibold">Actions</th></tr>
+            </thead>
+            <tbody id="transaction-rows" class="divide-y divide-slate-100">
+                <tr><td class="px-3 py-8 text-center text-slate-500" colspan="5">Loading transactions…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+<dialog id="transaction-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-950/40">
+    <form method="dialog" class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+        <h2 class="text-lg font-bold">Add transaction</h2>
+        <button class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close dialog">✕</button>
+    </form>
+    <form id="transaction-form" class="space-y-4 p-6">
+        {% csrf_token %}
+        <label class="block text-sm font-semibold text-slate-700">Type
+            <select class="form-input mt-2" name="transaction_type" required><option value="expense">Expense</option><option value="income">Income</option></select>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Amount
+            <input class="form-input mt-2" name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Category
+            <input class="form-input mt-2" name="category" maxlength="100" placeholder="e.g. groceries" required>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Date
+            <input class="form-input mt-2" name="transaction_date" type="date" required data-today>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Description <span class="font-normal text-slate-400">Optional</span>
+            <input class="form-input mt-2" name="description" maxlength="255" placeholder="What was this for?">
+        </label>
+        <div class="flex justify-end gap-3 pt-2">
+            <button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700" type="button" data-close-dialog="transaction-dialog">Cancel</button>
+            <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700" type="submit">Save transaction</button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}

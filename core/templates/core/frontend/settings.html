@@ -1,0 +1,81 @@
+{% extends "core/frontend/base.html" %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block page_content %}
+<section class="mb-8">
+    <p class="text-sm font-semibold text-indigo-600">YOUR ACCOUNT</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Settings</h1>
+    <p class="mt-2 text-slate-500">Keep your profile up to date and set helpful reminders.</p>
+</section>
+<div class="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+    <section class="panel">
+        <div class="mb-6">
+            <h2 class="text-lg font-bold text-slate-950">Personal profile</h2>
+            <p class="mt-1 text-sm text-slate-500">Your email address is managed by your sign-in account.</p>
+        </div>
+        <form id="profile-form" class="grid gap-4 sm:grid-cols-2">
+            {% csrf_token %}
+            <label class="block text-sm font-semibold text-slate-700">First name
+                <input class="form-input mt-2" name="first_name" maxlength="100" autocomplete="given-name">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Last name
+                <input class="form-input mt-2" name="last_name" maxlength="100" autocomplete="family-name">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Middle name
+                <input class="form-input mt-2" name="middle_name" maxlength="100">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Phone number
+                <input class="form-input mt-2" name="phone_number" type="tel" maxlength="20" autocomplete="tel">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Date of birth
+                <input class="form-input mt-2" name="date_of_birth" type="date">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Gender
+                <select class="form-input mt-2" name="gender"><option value="">Prefer not to say</option><option value="F">Female</option><option value="M">Male</option></select>
+            </label>
+            <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">Address
+                <input class="form-input mt-2" name="address" autocomplete="street-address">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">City
+                <input class="form-input mt-2" name="city" autocomplete="address-level2">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">State / region
+                <input class="form-input mt-2" name="state" autocomplete="address-level1">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Country
+                <input class="form-input mt-2" name="country" maxlength="100" autocomplete="country-name">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">Postal code
+                <input class="form-input mt-2" name="postal_code" maxlength="20" autocomplete="postal-code">
+            </label>
+            <div class="sm:col-span-2">
+                <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700" type="submit">Save profile</button>
+            </div>
+        </form>
+    </section>
+    <section class="panel">
+        <div class="mb-6 flex items-start justify-between gap-3">
+            <div><h2 class="text-lg font-bold text-slate-950">Reminders</h2><p class="mt-1 text-sm text-slate-500">A little nudge for the things you plan.</p></div>
+            <button class="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" type="button" data-open-dialog="reminder-dialog">+ Add</button>
+        </div>
+        <div id="reminder-list" class="divide-y divide-slate-100"><p class="py-6 text-sm text-slate-500">Loading reminders…</p></div>
+    </section>
+</div>
+<dialog id="reminder-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-950/40">
+    <form method="dialog" class="flex items-center justify-between border-b border-slate-100 px-6 py-5"><h2 class="text-lg font-bold">Add a reminder</h2><button class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close dialog">✕</button></form>
+    <form id="reminder-form" class="space-y-4 p-6">
+        {% csrf_token %}
+        <label class="block text-sm font-semibold text-slate-700">Title
+            <input class="form-input mt-2" name="title" maxlength="255" required>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Note <span class="font-normal text-slate-400">Optional</span>
+            <textarea class="form-input mt-2" name="message" rows="3"></textarea>
+        </label>
+        <label class="block text-sm font-semibold text-slate-700">Remind me at
+            <input class="form-input mt-2" name="remind_at" type="datetime-local" required>
+        </label>
+        <div class="flex justify-end gap-3 pt-2"><button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700" type="button" data-close-dialog="reminder-dialog">Cancel</button><button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700" type="submit">Save reminder</button></div>
+    </form>
+</dialog>
+{% endblock %}

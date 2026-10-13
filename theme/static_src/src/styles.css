@@ -8,3 +8,25 @@
   * the scope of this path.
   */
 @source "../../../**/*.{html,py,js}";
+
+@layer components {
+  .nav-link {
+    @apply whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900;
+  }
+
+  .nav-link-active {
+    @apply bg-indigo-50 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-700;
+  }
+
+  .panel {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6;
+  }
+
+  .stat-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  }
+
+  .form-input {
+    @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100;
+  }
+}

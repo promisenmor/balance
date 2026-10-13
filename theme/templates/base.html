@@ -5,6 +5,7 @@
     <title>{% block title %}Balance{% endblock %}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block extra_head %}{% endblock %}
     {% tailwind_css %}
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
@@ -13,5 +14,6 @@
             <h1 class="text-3xl font-semibold">Balance</h1>
         {% endblock %}
     </main>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
