@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Budget, Goal, Reminder, Transaction, UserProfile
+
+
+admin.site.register([UserProfile, Transaction, Budget, Goal, Reminder])
