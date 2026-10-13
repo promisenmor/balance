@@ -12,6 +12,8 @@ See [AUTHENTICATION.md](./AUTHENTICATION.md) for endpoint details.
 The signed-in frontend is available at `/` and includes the dashboard,
 transactions, budgets, goals, analytics, and account settings. Sign in at
 `/login/`; page data and form actions use the authenticated REST API.
+See [URLS.md](./URLS.md) for the complete frontend, API, authentication, and
+administration URL index.
 
 Interactive API documentation is available at `/api/docs/` (Swagger UI) and
 `/api/redoc/` (ReDoc). The OpenAPI 3 schema is served at `/api/schema/`.
@@ -44,19 +46,22 @@ Create a PostgreSQL database and user matching `DB_NAME`, `DB_USER`, and
 
 ```powershell
 python manage.py tailwind install
+python manage.py tailwind build
 python manage.py migrate
 python manage.py createsuperuser
 ```
 
-Run Django and the Tailwind watcher together during development:
+The Tailwind build creates the stylesheet used by every frontend page. When
+working on the UI, run Django and the Tailwind watcher together:
 
 ```powershell
 python manage.py tailwind dev
 ```
 
-For a Django-only server, run `python manage.py runserver`. To rebuild the
-production CSS, run `python manage.py tailwind build`, then collect static files
-with `python manage.py collectstatic`.
+For a Django-only server, build the stylesheet first, then run
+`python manage.py runserver`. For production, run
+`python manage.py tailwind build`, then collect static files with
+`python manage.py collectstatic`.
 
 `DB_ENGINE=django.db.backends.sqlite3` can be used in `.env` for local checks
 that do not require a running PostgreSQL server.
