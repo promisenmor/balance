@@ -1,0 +1,74 @@
+{% extends "core/frontend/base.html" %}
+
+{% block page_title %}Overview{% endblock %}
+
+{% block page_content %}
+<section class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-sm font-semibold text-indigo-600">YOUR MONEY AT A GLANCE</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Good to see you, {{ request.user.profile.first_name|default:request.user.email }}.</h1>
+        <p class="mt-2 text-slate-500">Here’s how things are looking today.</p>
+    </div>
+    <a href="{% url 'frontend-transactions' %}" class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">+ Add transaction</a>
+</section>
+<section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Financial summary">
+    <article class="stat-card">
+        <p class="text-sm font-medium text-slate-500">Total balance</p>
+        <p class="mt-3 text-3xl font-bold tracking-tight text-slate-950" data-stat="balance">—</p>
+        <p class="mt-2 text-xs text-slate-500">Income less expenses</p>
+    </article>
+    <article class="stat-card">
+        <p class="text-sm font-medium text-slate-500">Income</p>
+        <p class="mt-3 text-3xl font-bold tracking-tight text-emerald-700" data-stat="income">—</p>
+        <p class="mt-2 text-xs text-slate-500">Recorded transactions</p>
+    </article>
+    <article class="stat-card">
+        <p class="text-sm font-medium text-slate-500">Expenses</p>
+        <p class="mt-3 text-3xl font-bold tracking-tight text-rose-700" data-stat="expense">—</p>
+        <p class="mt-2 text-xs text-slate-500">Recorded transactions</p>
+    </article>
+    <article class="stat-card border-indigo-100 bg-indigo-50/70">
+        <p class="text-sm font-medium text-indigo-700">Active goals</p>
+        <p class="mt-3 text-3xl font-bold tracking-tight text-indigo-950" data-stat="goal-count">—</p>
+        <p class="mt-2 text-xs text-indigo-700">Keep moving forward</p>
+    </article>
+</section>
+<section class="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.85fr]">
+    <article class="panel">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-950">Recent transactions</h2>
+                <p class="mt-1 text-sm text-slate-500">Your latest money movements</p>
+            </div>
+            <a href="{% url 'frontend-transactions' %}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">View all →</a>
+        </div>
+        <div id="dashboard-transactions" class="mt-5 divide-y divide-slate-100">
+            <p class="py-8 text-center text-sm text-slate-500">Loading your transactions…</p>
+        </div>
+    </article>
+    <article class="panel">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-950">Budget pulse</h2>
+                <p class="mt-1 text-sm text-slate-500">Keep an eye on your limits</p>
+            </div>
+            <a href="{% url 'frontend-budgets' %}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">Budgets →</a>
+        </div>
+        <div id="dashboard-budgets" class="mt-5 space-y-5">
+            <p class="py-8 text-center text-sm text-slate-500">Loading your budgets…</p>
+        </div>
+    </article>
+</section>
+<section class="panel mt-6">
+    <div class="flex items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-bold text-slate-950">Goals in progress</h2>
+            <p class="mt-1 text-sm text-slate-500">Every step counts</p>
+        </div>
+        <a href="{% url 'frontend-goals' %}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">View goals →</a>
+    </div>
+    <div id="dashboard-goals" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <p class="py-8 text-center text-sm text-slate-500">Loading your goals…</p>
+    </div>
+</section>
+{% endblock %}

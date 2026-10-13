@@ -84,6 +84,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 ROOT_URLCONF = 'balance.urls'
+LOGIN_URL = "frontend-login"
 
 TEMPLATES = [
     {

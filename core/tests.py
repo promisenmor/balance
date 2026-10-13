@@ -401,3 +401,50 @@ class CoreApiTests(TestCase):
         self.assertTrue(self.client.login(username="owner", password="Strong-password-9274"))
         response = self.client.get("/api/transactions/")
         self.assertEqual(response.status_code, 200, response.data)
+
+
+class FrontendPageTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="frontend",
+            email="frontend@example.com",
+            password="Strong-password-9274",
+        )
+
+    def test_frontend_pages_require_a_session(self):
+        for path in (
+            "/",
+            "/transactions/",
+            "/budgets/",
+            "/goals/",
+            "/analytics/",
+            "/settings/",
+        ):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertRedirects(response, f"/login/?next={path}")
+
+    def test_frontend_pages_render_for_signed_in_users(self):
+        self.client.force_login(self.user)
+        pages = (
+            ("/", "Overview"),
+            ("/transactions/", "Transactions"),
+            ("/budgets/", "Budgets"),
+            ("/goals/", "Savings goals"),
+            ("/analytics/", "Analytics"),
+            ("/settings/", "Settings"),
+        )
+        for path, heading in pages:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, heading)
+                self.assertContains(response, "theme/app.js")
+
+    def test_frontend_login_uses_email_and_creates_a_session(self):
+        response = self.client.post(
+            "/login/",
+            {"email": self.user.email, "password": "Strong-password-9274"},
+        )
+        self.assertRedirects(response, "/")
+        self.assertEqual(self.client.get("/").status_code, 200)

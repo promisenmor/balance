@@ -24,6 +24,7 @@ from core.views import PasswordResetConfirmPageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("", include("core.frontend_urls")),
     path("api-auth/", include("rest_framework.urls")),
     re_path(
         r'^api/auth/password/reset/confirm/?$',

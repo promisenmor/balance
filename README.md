@@ -9,6 +9,10 @@ alerts are reported at 80% and 100% of a limit; transactions remain allowed
 when a budget is exceeded. JWT and Django session authentication are enabled.
 See [AUTHENTICATION.md](./AUTHENTICATION.md) for endpoint details.
 
+The signed-in frontend is available at `/` and includes the dashboard,
+transactions, budgets, goals, analytics, and account settings. Sign in at
+`/login/`; page data and form actions use the authenticated REST API.
+
 ## Requirements
 
 - Python 3.12 or newer
