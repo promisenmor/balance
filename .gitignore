@@ -1,1 +1,12 @@
-venv
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+db.sqlite3
+staticfiles/
+node_modules/
+theme/static/css/dist/
+
+AUTHENTICATION.md

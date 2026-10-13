@@ -14,20 +14,18 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from decouple import Csv, config
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in {"1", "true", "yes"}
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
+SECRET_KEY = config("DJANGO_SECRET_KEY", default="")
 if not SECRET_KEY:
     if not DEBUG:
         raise RuntimeError("DJANGO_SECRET_KEY must be configured when DJANGO_DEBUG is disabled.")
     SECRET_KEY = "local-development-only-not-for-production"
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="", cast=Csv())
 
 if not DEBUG:
     if not ALLOWED_HOSTS:
@@ -47,9 +45,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    "tailwind",
 
     #apps
     "core.apps.CoreConfig",
+    "theme",
 
     #auth
     "rest_framework",
@@ -108,8 +108,13 @@ WSGI_APPLICATION = 'balance.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        "ENGINE": config("DB_ENGINE", default="django.db.backends.postgresql"),
+        "NAME": config("DB_NAME", default="balance"),
+        "USER": config("DB_USER", default="balance"),
+        "PASSWORD": config("DB_PASSWORD", default=""),
+        "HOST": config("DB_HOST", default="localhost"),
+        "PORT": config("DB_PORT", default="5432"),
+        "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
     }
 }
 
@@ -149,6 +154,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+TAILWIND_APP_NAME = "theme"
+NPM_BIN_PATH = config("NPM_BIN_PATH", default="npm.cmd" if os.name == "nt" else "npm")
 
 
 REST_FRAMEWORK = {
@@ -183,8 +192,8 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
 
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 if DEBUG:
     EMAIL_BACKEND = EMAIL_BACKEND or "django.core.mail.backends.console.EmailBackend"
     DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL or "Balance <no-reply@localhost>"
