@@ -1,11 +1,11 @@
-
 # Stage 1: Build Tailwind CSS
 FROM node:20-alpine AS tailwind-builder
 
 WORKDIR /app
 
-# Copy the existing Tailwind project
-COPY theme/static_src/ ./theme/static_src/
+# Include the Django templates and scripts Tailwind scans when generating CSS.
+COPY core/ ./core/
+COPY theme/ ./theme/
 
 # Install dependencies and build production CSS
 WORKDIR /app/theme/static_src
