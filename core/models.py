@@ -1,5 +1,10 @@
+from decimal import Decimal
+
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 
 
 class UserProfile(models.Model):
@@ -47,22 +52,119 @@ class Transaction(models.Model):
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE)
     category = models.CharField(max_length=100)
+    transaction_date = models.DateField(default=timezone.localdate)
+    description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name="transaction_amount_positive",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.transaction_type} - {self.amount}"
 
 
+class Budget(models.Model):
+    class Period(models.TextChoices):
+        WEEKLY = "weekly", "Weekly"
+        MONTHLY = "monthly", "Monthly"
+        YEARLY = "yearly", "Yearly"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="budgets",
+    )
+    category = models.CharField(max_length=100)
+    limit_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    period = models.CharField(
+        max_length=10,
+        choices=Period.choices,
+        default=Period.MONTHLY,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["category", "period"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "category", "period"],
+                name="unique_user_budget_category_period",
+            ),
+            models.CheckConstraint(
+                condition=Q(limit_amount__gt=0),
+                name="budget_limit_positive",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.category} {self.get_period_display().lower()} budget"
+
+
 class Goal(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    target_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    current_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    target_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    current_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
     deadline = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(target_amount__gt=0),
+                name="goal_target_positive",
+            ),
+            models.CheckConstraint(
+                condition=Q(current_amount__gte=0),
+                name="goal_current_amount_nonnegative",
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class Reminder(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField(blank=True)
+    remind_at = models.DateTimeField()
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["is_completed", "remind_at"]
 
     def __str__(self):
         return self.title

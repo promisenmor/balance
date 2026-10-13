@@ -10,11 +10,13 @@ from rest_framework import permissions
 from django.db.models import Sum
 from dj_rest_auth.views import PasswordResetConfirmView as DjPasswordResetConfirmView
 
-from .models import Goal, Transaction, UserProfile
+from .models import Budget, Goal, Reminder, Transaction, UserProfile
 from .serializers import (
+    BudgetSerializer,
     DashboardSerializer,
     GoalSerializer,
     ProfileSerializer,
+    ReminderSerializer,
     TransactionSerializer,
 )
 
@@ -59,7 +61,7 @@ class TransactionDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
-    
+
 
 class GoalListCreatView(ListCreateAPIView):
     serializer_class = GoalSerializer
@@ -71,14 +73,51 @@ class GoalListCreatView(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
 class GoalDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = GoalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Goal.objects.filter(user=self.request.user)
-    
+
+
+class BudgetListCreateView(ListCreateAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Budget.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class BudgetDetailView(RetrieveUpdateDestroyAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Budget.objects.filter(user=self.request.user)
+
+
+class ReminderListCreateView(ListCreateAPIView):
+    serializer_class = ReminderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Reminder.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class ReminderDetailView(RetrieveUpdateDestroyAPIView):
+    serializer_class = ReminderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Reminder.objects.filter(user=self.request.user)
+
 
 # Dashboard view
 class DashboardView(GenericAPIView):
@@ -106,7 +145,8 @@ class DashboardView(GenericAPIView):
             "total_income" : total_income,
             "total_expense" : total_expense,
             "recent_transactions": transactions.order_by("-created_at")[:5],
-            "goals": Goal.objects.filter(user=user).order_by("-created_at")[:5],    
+            "goals": Goal.objects.filter(user=user).order_by("-created_at")[:5],
+            "budgets": user.budgets.all(),
         }
 
         serializer = self.get_serializer(data)

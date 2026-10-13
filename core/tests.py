@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+from decimal import Decimal
 import re
 from urllib.parse import parse_qs, urlparse
 
@@ -5,10 +7,12 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core import mail
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from rest_framework.test import APIClient
 
-from .models import UserProfile
+from .models import Budget, Goal, Reminder, Transaction, UserProfile
+from .services import get_budget_period
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
@@ -118,6 +122,17 @@ class AuthenticationFlowTests(TestCase):
         response = self.client.get("/api/auth/profile/")
         self.assertEqual(response.status_code, 401)
 
+    def test_registered_user_can_log_in_with_a_session(self):
+        self.assertEqual(self.register().status_code, 201)
+        self.assertEqual(self.verify_email("user@example.com").status_code, 200)
+
+        response = self.client.post(
+            "/api-auth/login/",
+            {"username": "user@example.com", "password": self.password},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.get("/api/transactions/").status_code, 200)
+
     def test_password_change_and_reset(self):
         self.assertEqual(self.register().status_code, 201)
         self.assertEqual(self.verify_email("user@example.com").status_code, 200)
@@ -197,3 +212,192 @@ class AuthenticationFlowTests(TestCase):
             format="json",
         )
         self.assertEqual(refresh_response.status_code, 401)
+
+
+class CoreApiTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="owner",
+            email="owner@example.com",
+            password="Strong-password-9274",
+        )
+        self.other_user = get_user_model().objects.create_user(
+            username="other",
+            email="other@example.com",
+            password="Strong-password-9274",
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_transaction_validation_and_budget_alerts(self):
+        budget_response = self.client.post(
+            "/api/budgets/",
+            {"category": " Food ", "limit_amount": "100.00"},
+            format="json",
+        )
+        self.assertEqual(budget_response.status_code, 201, budget_response.data)
+        self.assertEqual(budget_response.data["category"], "food")
+
+        transaction_response = self.client.post(
+            "/api/transactions/",
+            {
+                "amount": "79.99",
+                "transaction_type": "expense",
+                "category": " FOOD ",
+                "description": "Groceries",
+            },
+            format="json",
+        )
+        self.assertEqual(transaction_response.status_code, 201, transaction_response.data)
+        self.assertEqual(transaction_response.data["category"], "food")
+        legacy_detail = self.client.get(
+            f"/api/transactions/{transaction_response.data['id']}"
+        )
+        self.assertEqual(legacy_detail.status_code, 200)
+
+        budget_response = self.client.get("/api/budgets/")
+        self.assertEqual(budget_response.data[0]["alert_level"], "none")
+        self.assertEqual(budget_response.data[0]["remaining"], Decimal("20.01"))
+
+        warning_transaction = self.client.post(
+            "/api/transactions/",
+            {
+                "amount": "0.01",
+                "transaction_type": "expense",
+                "category": "food",
+            },
+            format="json",
+        )
+        self.assertEqual(warning_transaction.status_code, 201)
+        budget_response = self.client.get("/api/budgets/")
+        self.assertEqual(budget_response.data[0]["alert_level"], "warning")
+        self.assertEqual(budget_response.data[0]["percent_used"], Decimal("80.00"))
+
+        over_limit_transaction = self.client.post(
+            "/api/transactions/",
+            {
+                "amount": "25.00",
+                "transaction_type": "expense",
+                "category": "food",
+            },
+            format="json",
+        )
+        self.assertEqual(over_limit_transaction.status_code, 201)
+        budget_response = self.client.get("/api/budgets/")
+        self.assertEqual(budget_response.data[0]["alert_level"], "exceeded")
+        self.assertEqual(budget_response.data[0]["remaining"], Decimal("-5"))
+
+        invalid_transaction = self.client.post(
+            "/api/transactions/",
+            {
+                "amount": "0",
+                "transaction_type": "expense",
+                "category": "food",
+            },
+            format="json",
+        )
+        self.assertEqual(invalid_transaction.status_code, 400)
+
+    def test_budget_period_boundaries_and_user_isolation(self):
+        budget = Budget.objects.create(
+            user=self.user,
+            category="food",
+            limit_amount="100.00",
+            period=Budget.Period.MONTHLY,
+        )
+        Transaction.objects.create(
+            user=self.user,
+            amount="15.00",
+            transaction_type="expense",
+            category="food",
+            transaction_date=timezone.localdate().replace(day=1) - timedelta(days=1),
+        )
+        Transaction.objects.create(
+            user=self.user,
+            amount="30.00",
+            transaction_type="expense",
+            category="food",
+            transaction_date=timezone.localdate().replace(day=1),
+        )
+        Transaction.objects.create(
+            user=self.other_user,
+            amount="40.00",
+            transaction_type="expense",
+            category="food",
+            transaction_date=timezone.localdate().replace(day=2),
+        )
+        response = self.client.get("/api/budgets/")
+        period_start, period_end = get_budget_period(
+            Budget.Period.MONTHLY,
+            timezone.localdate(),
+        )
+        self.assertEqual(response.data[0]["spent"], Decimal("30"))
+        self.assertEqual(response.data[0]["period_start"], period_start)
+        self.assertEqual(
+            response.data[0]["period_end"],
+            period_end - timedelta(days=1),
+        )
+        self.assertEqual(self.client.get(f"/api/budgets/{budget.pk}/").status_code, 200)
+        self.client.force_authenticate(self.other_user)
+        self.assertEqual(self.client.get(f"/api/budgets/{budget.pk}/").status_code, 404)
+
+        self.assertEqual(
+            get_budget_period(Budget.Period.WEEKLY, date(2026, 10, 14)),
+            (date(2026, 10, 12), date(2026, 10, 19)),
+        )
+        self.assertEqual(
+            get_budget_period(Budget.Period.YEARLY, date(2026, 10, 14)),
+            (date(2026, 1, 1), date(2027, 1, 1)),
+        )
+
+    def test_goals_reminders_and_dashboard(self):
+        goal_response = self.client.post(
+            "/api/goals/",
+            {
+                "title": "Emergency fund",
+                "target_amount": "1000.00",
+                "current_amount": "100.00",
+            },
+            format="json",
+        )
+        self.assertEqual(goal_response.status_code, 201, goal_response.data)
+        self.assertEqual(goal_response.data["progress"], 10.0)
+
+        invalid_goal = self.client.post(
+            "/api/goals/",
+            {"title": "Invalid", "target_amount": "0"},
+            format="json",
+        )
+        self.assertEqual(invalid_goal.status_code, 400)
+
+        reminder_response = self.client.post(
+            "/api/reminders/",
+            {
+                "title": "Review spending",
+                "message": "Check this month's expenses.",
+                "remind_at": (timezone.now() + timedelta(days=1)).isoformat(),
+            },
+            format="json",
+        )
+        self.assertEqual(reminder_response.status_code, 201, reminder_response.data)
+        reminder = Reminder.objects.get(pk=reminder_response.data["id"])
+        self.assertEqual(reminder.user, self.user)
+        self.assertEqual(self.client.patch(
+            f"/api/reminders/{reminder.pk}/",
+            {"is_completed": True},
+            format="json",
+        ).status_code, 200)
+        self.client.force_authenticate(self.other_user)
+        self.assertEqual(self.client.get(f"/api/reminders/{reminder.pk}/").status_code, 404)
+
+        self.client.force_authenticate(self.user)
+        dashboard = self.client.get("/api/dashboard/")
+        self.assertEqual(dashboard.status_code, 200, dashboard.data)
+        self.assertIn("budgets", dashboard.data)
+        self.assertEqual(dashboard.data["goals"][0]["title"], "Emergency fund")
+
+    def test_session_authentication_is_enabled_for_api(self):
+        self.client.force_authenticate(user=None)
+        self.assertTrue(self.client.login(username="owner", password="Strong-password-9274"))
+        response = self.client.get("/api/transactions/")
+        self.assertEqual(response.status_code, 200, response.data)

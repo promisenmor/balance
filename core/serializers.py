@@ -9,7 +9,8 @@ from dj_rest_auth.registration.serializers import RegisterSerializer as DjRegist
 from dj_rest_auth.serializers import PasswordResetSerializer as DjPasswordResetSerializer
 from rest_framework.validators import UniqueValidator
 
-from .models import Goal, Transaction, UserProfile
+from .models import Budget, Goal, Reminder, Transaction, UserProfile
+from .services import get_budget_status
 
 
 class EmailRegistrationSerializer(DjRegisterSerializer):
@@ -93,8 +94,22 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ["id", "amount", "transaction_type", "category", "created_at"]
+        fields = [
+            "id",
+            "amount",
+            "transaction_type",
+            "category",
+            "transaction_date",
+            "description",
+            "created_at",
+        ]
         read_only_fields = ["id", "created_at"]
+
+    def validate_category(self, value):
+        category = value.strip()
+        if not category:
+            raise serializers.ValidationError("Category cannot be blank.")
+        return category.casefold()
 
 
 class GoalSerializer(serializers.ModelSerializer):
@@ -126,3 +141,105 @@ class DashboardSerializer(serializers.Serializer):
     total_expense = serializers.DecimalField(max_digits=10, decimal_places=2)
     recent_transactions = TransactionSerializer(many=True)
     goals = GoalSerializer(many=True)
+    budgets = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
+    def get_budgets(self, data):
+        return BudgetSerializer(
+            data["budgets"],
+            many=True,
+            context=self.context,
+        ).data
+
+
+class BudgetSerializer(serializers.ModelSerializer):
+    spent = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    remaining = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    percent_used = serializers.DecimalField(max_digits=7, decimal_places=2, read_only=True)
+    alert_level = serializers.ChoiceField(
+        choices=("none", "warning", "exceeded"),
+        read_only=True,
+    )
+    period_start = serializers.DateField(read_only=True)
+    period_end = serializers.DateField(read_only=True)
+
+    class Meta:
+        model = Budget
+        fields = [
+            "id",
+            "category",
+            "limit_amount",
+            "period",
+            "spent",
+            "remaining",
+            "percent_used",
+            "alert_level",
+            "period_start",
+            "period_end",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "spent",
+            "remaining",
+            "percent_used",
+            "alert_level",
+            "period_start",
+            "period_end",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_category(self, value):
+        category = value.strip()
+        if not category:
+            raise serializers.ValidationError("Category cannot be blank.")
+        return category.casefold()
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        category = attrs.get("category", getattr(self.instance, "category", ""))
+        period = attrs.get("period", getattr(self.instance, "period", Budget.Period.MONTHLY))
+        duplicate_budgets = Budget.objects.filter(
+            user=user,
+            category__iexact=category,
+            period=period,
+        )
+        if self.instance:
+            duplicate_budgets = duplicate_budgets.exclude(pk=self.instance.pk)
+        if duplicate_budgets.exists():
+            raise serializers.ValidationError(
+                {"category": "A budget for this category and period already exists."}
+            )
+        return attrs
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        status = get_budget_status(instance)
+        data.update(
+            {
+                "spent": status["spent"],
+                "remaining": status["remaining"],
+                "percent_used": status["percent_used"],
+                "alert_level": status["alert_level"],
+                "period_start": status["period_start"],
+                "period_end": status["period_end"],
+            }
+        )
+        return data
+
+
+class ReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reminder
+        fields = [
+            "id",
+            "title",
+            "message",
+            "remind_at",
+            "is_completed",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]

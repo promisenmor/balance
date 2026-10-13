@@ -163,6 +163,7 @@ NPM_BIN_PATH = config("NPM_BIN_PATH", default="npm.cmd" if os.name == "nt" else 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
