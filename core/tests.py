@@ -448,3 +448,24 @@ class FrontendPageTests(TestCase):
         )
         self.assertRedirects(response, "/")
         self.assertEqual(self.client.get("/").status_code, 200)
+
+
+class ApiDocumentationTests(TestCase):
+    def test_schema_and_interactive_documentation_pages_are_available(self):
+        schema = self.client.get("/api/schema/")
+        self.assertEqual(schema.status_code, 200)
+        self.assertEqual(schema["Content-Type"].split(";")[0], "application/vnd.oai.openapi")
+        self.assertEqual(schema.data["info"]["title"], "Balance API")
+        self.assertIn("/api/budgets/", schema.data["paths"])
+        self.assertIn("jwtAuth", schema.data["components"]["securitySchemes"])
+        self.assertIn("cookieAuth", schema.data["components"]["securitySchemes"])
+
+        swagger = self.client.get("/api/docs/")
+        self.assertEqual(swagger.status_code, 200)
+        self.assertContains(swagger, "SwaggerUIBundle")
+        self.assertContains(swagger, "/api/schema/")
+
+        redoc = self.client.get("/api/redoc/")
+        self.assertEqual(redoc.status_code, 200)
+        self.assertContains(redoc, "<redoc")
+        self.assertContains(redoc, "/api/schema/")

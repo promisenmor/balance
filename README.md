@@ -13,6 +13,9 @@ The signed-in frontend is available at `/` and includes the dashboard,
 transactions, budgets, goals, analytics, and account settings. Sign in at
 `/login/`; page data and form actions use the authenticated REST API.
 
+Interactive API documentation is available at `/api/docs/` (Swagger UI) and
+`/api/redoc/` (ReDoc). The OpenAPI 3 schema is served at `/api/schema/`.
+
 ## Requirements
 
 - Python 3.12 or newer
