@@ -15,6 +15,9 @@ transactions, budgets, goals, analytics, and account settings. Sign in at
 See [URLS.md](./URLS.md) for the complete frontend, API, authentication, and
 administration URL index.
 
+Interactive API documentation is available at `/api/docs/` (Swagger UI) and
+`/api/redoc/` (ReDoc). The OpenAPI 3 schema is served at `/api/schema/`.
+
 ## Requirements
 
 - Python 3.12 or newer
