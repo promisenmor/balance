@@ -449,6 +449,28 @@ class FrontendPageTests(TestCase):
         self.assertRedirects(response, "/")
         self.assertEqual(self.client.get("/").status_code, 200)
 
+    def test_frontend_registration_is_available_to_anonymous_users(self):
+        response = self.client.get("/register/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Create your account.")
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'name="password1"')
+        self.assertContains(response, 'name="password2"')
+        self.assertContains(response, "theme/registration.js")
+        self.assertContains(
+            self.client.get("/login/"),
+            '<a class="block w-full rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-center font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-4 focus:ring-indigo-100" href="/register/">Create an account</a>',
+            html=True,
+        )
+
+    def test_signed_in_users_are_redirected_from_registration(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get("/register/")
+
+        self.assertRedirects(response, "/")
+
 
 class ApiDocumentationTests(TestCase):
     def test_schema_and_interactive_documentation_pages_are_available(self):

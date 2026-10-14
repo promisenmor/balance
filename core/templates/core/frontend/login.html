@@ -32,7 +32,10 @@
             </label>
             <button class="w-full rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200" type="submit">Sign in</button>
         </form>
-        <p class="mt-6 text-sm text-slate-500">Need an account? Registration is available through the <a class="font-semibold text-indigo-600 hover:text-indigo-700" href="/api/docs/">Balance API</a>.</p>
+        <div class="mt-6 border-t border-slate-200 pt-6">
+            <p class="mb-3 text-sm text-slate-600">New to Balance?</p>
+            <a class="block w-full rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-center font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-4 focus:ring-indigo-100" href="{% url 'frontend-register' %}">Create an account</a>
+        </div>
     </section>
     <aside class="relative hidden min-h-[34rem] overflow-hidden rounded-[2rem] bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
         <div class="absolute -right-20 -top-20 size-80 rounded-full bg-indigo-500/30 blur-3xl"></div>

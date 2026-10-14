@@ -9,6 +9,7 @@ authenticated require a signed-in user or a valid access token, as indicated.
 | Method | Path | Authentication | Purpose |
 | --- | --- | --- | --- |
 | `GET`, `POST` | `/login/` | None | Sign in to the web app |
+| `GET` | `/register/` | None | Create an account and request email verification |
 | `POST` | `/logout/` | Session | Sign out of the web app |
 | `GET` | `/` | Session | Dashboard |
 | `GET` | `/transactions/` | Session | Manage transactions |

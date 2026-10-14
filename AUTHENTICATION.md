@@ -35,6 +35,9 @@ disabled.
 
 ## Endpoints
 
-The signed-in HTML frontend is available at `/` after signing in at `/login/`.
-It includes the dashboard, transactions, budgets, goals, analytics, and
-settings. Its data is loaded from the API using the Django session and CSRF
+Create an account at `/register/`, then verify the email address using the link
+sent to the registered email before signing in at `/login/`. The signed-in HTML
+frontend is available at `/` and includes the dashboard, transactions, budgets,
+goals, analytics, and settings. Its data is loaded from the API using the
+Django session and CSRF protection. See [URLS.md](./URLS.md) for the complete
+frontend, API, authentication, and administration route list.

@@ -50,6 +50,13 @@ def frontend_login(request):
     return render(request, "core/frontend/login.html")
 
 
+@require_http_methods(["GET"])
+def frontend_register(request):
+    if request.user.is_authenticated:
+        return redirect("frontend-dashboard")
+    return render(request, "core/frontend/register.html")
+
+
 @require_http_methods(["POST"])
 @login_required
 def frontend_logout(request):
